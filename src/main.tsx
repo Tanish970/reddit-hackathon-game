@@ -72,79 +72,122 @@ export const GameBoard = ({ context }) => {
 
 
 const currentGame = gamesData[tries % gamesData.length];
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const normalizeString = (str) =>
-    str.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
 
-  const handleGuess = (userGuess) => {
-    const normalizedGuess = normalizeString(userGuess);
-    const isCorrect = currentGame.correctAnswers.some((answer) =>
-      normalizeString(answer).includes(normalizedGuess)
-    );
+const normalizeString = (str) =>
+  str.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
 
-    if (tries < 10) {
-      setTries((prevTries) => prevTries + 1);
-      setGuess(userGuess);
-
-      if (isCorrect) {
-        setScore((prevScore) => prevScore + 1);
-        setResult('Correct! 🎉');
-      } else {
-        setResult('Incorrect! ');
-      }
-    }
-  };
-
-  const restartGame = () => {
-    setScore(0);
-    setTries(0);
-    setGuess('');
-    setResult('');
-  };
-
-  const guessForm = useForm(
-    {
-      fields: [
-        {
-          type: 'string',
-          name: 'guess',
-          label: 'Your Guess',
-          placeholder: 'Enter your guess here',
-        },
-      ],
-    },
-    (values) => {
-      handleGuess(values.guess);
-    }
+const handleGuess =async (userGuess) => {
+  const normalizedGuess = normalizeString(userGuess);
+  const isCorrect = currentGame.correctAnswers.some((answer) =>
+    normalizeString(answer).includes(normalizedGuess)
   );
 
-  const isNarrow = context.dimensions?.width < 500;
 
-  return (
-    <vstack gap="medium" alignment="center middle">
-      {/* Score Section */}
-      <hstack alignment="middle center" gap="medium" padding="medium">
-        <text size="large">Score:</text>
-        <text size="large">{score}</text>
-        <text size="large">Tries:</text>
-        <text size="large">{tries}/10</text>
-      </hstack>
+  if (tries < 10) {
+    setGuess(userGuess);
+   
+    if (isCorrect) {
+      setScore((prevScore) => prevScore + 1);
+      setResult('Correct! 🎉');
+    } else {
+      setResult(`Incorrect! The correct answer was: ${currentGame.correctAnswers[0]}`);
+    }
+    //await sleep(2000);
+    setTries((prevTries) => prevTries + 1);
+   
 
-      {/* Game Layout: Responsive based on width */}
-      {isNarrow ? (
-        <vstack alignment="center middle" gap="large" padding="medium">
-          {/* Image Section */}
-          <image
-            url={currentGame.imageUrl}
-            description={currentGame.description}
-            height="100px"
-            width="100px"
-            borderRadius="20%"
-            resizeMode="blur"
-          />
+  }
+};
 
-          {/* Guess Input Section */}
-          {tries < 10 && <text size="medium">Guess the image!</text>}
+const restartGame = () => {
+  setScore(0);
+  setTries(0);
+  setGuess('');
+  setResult('');
+};
+
+const guessForm = useForm(
+  {
+    fields: [
+      {
+        type: 'string',
+        name: 'guess',
+        label: 'Your Guess',
+        placeholder: 'Enter your guess here',
+      },
+    ],
+  },
+  (values) => {
+    handleGuess(values.guess);
+  }
+);
+
+const isNarrow = context.dimensions?.width < 500;
+
+return (
+  <vstack gap="medium" alignment="center middle">
+    {/* Score Section */}
+    <hstack alignment="middle center" gap="medium" padding="medium">
+      <text size="large">Score:</text>
+      <text size="large">{score}</text>
+      <text size="large">Tries:</text>
+      <text size="large">{tries}/10</text>
+    </hstack>
+
+    {/* Game Layout: Responsive based on width */}
+    {isNarrow ? (
+      <vstack alignment="center middle" gap="large" padding="medium">
+        {/* Image Section */}
+        <image
+          url={currentGame.imageUrl}
+          description={currentGame.description}
+          height="100px"
+          width="100px"
+          borderRadius="20%"
+          resizeMode="blur"
+        />
+
+        {/* Guess Input Section */}
+        {tries < 10 && <text size="medium">Guess the Celeb!</text>}
+        <button
+          appearance="secondary"
+          onPress={() => {
+            if (tries < 10) {
+              context.ui.showForm(guessForm);
+            } else {
+              setResult('Game Over! Restart to play again.');
+            }
+          }}
+        >
+          Enter Your Guess
+        </button>
+        {result && (
+          <text size="medium" color={result === 'Correct! 🎉' ? 'green' : 'red'}>
+            {result}
+          </text>
+        )}
+        {tries >= 10 && (
+          <text size="medium" color="blue" alignment="center middle">
+            Game Over! Your score is {score} out of 10.
+          </text>
+        )}
+      </vstack>
+    ) : (
+      <hstack alignment="center middle" gap="large" padding="medium">
+        {/* Image Section */}
+        <image
+          url={currentGame.imageUrl}
+          description={currentGame.description}
+          height="300px"
+          width="300px"
+          borderRadius="20%"
+        />
+
+        {/* Guess Input Section */}
+        <vstack gap="medium" alignment="center middle">
+          <text size="large">Guess the image!</text>
           <button
             appearance="secondary"
             onPress={() => {
@@ -163,56 +206,19 @@ const currentGame = gamesData[tries % gamesData.length];
             </text>
           )}
           {tries >= 10 && (
-            <text size="medium" color="blue" alignment="center middle">
+            <text size="large" color="blue" alignment="center middle">
               Game Over! Your score is {score} out of 10.
             </text>
           )}
         </vstack>
-      ) : (
-        <hstack alignment="center middle" gap="large" padding="medium">
-          {/* Image Section */}
-          <image
-            url={currentGame.imageUrl}
-            description={currentGame.description}
-            height="300px"
-            width="300px"
-            borderRadius="20%"
-          />
-
-          {/* Guess Input Section */}
-          <vstack gap="medium" alignment="center middle">
-            <text size="large">Guess the image!</text>
-            <button
-              appearance="secondary"
-              onPress={() => {
-                if (tries < 10) {
-                  context.ui.showForm(guessForm);
-                } else {
-                  setResult('Game Over! Restart to play again.');
-                }
-              }}
-            >
-              Enter Your Guess
-            </button>
-            {result && (
-              <text size="medium" color={result === 'Correct! 🎉' ? 'green' : 'red'}>
-                {result}
-              </text>
-            )}
-            {tries >= 10 && (
-              <text size="large" color="blue" alignment="center middle">
-                Game Over! Your score is {score} out of 10.
-              </text>
-            )}
-          </vstack>
-        </hstack>
-      )}
-      {/* Restart Button */}
-      <button appearance="primary" onPress={restartGame}>
-        Restart Game
-      </button>
-    </vstack>
-  );
+      </hstack>
+    )}
+    {/* Restart Button */}
+    <button appearance="primary" onPress={restartGame}>
+      Restart Game
+    </button>
+  </vstack>
+);
 };
 
 export default Devvit;
