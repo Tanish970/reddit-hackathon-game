@@ -187,7 +187,7 @@ return (
 
         {/* Guess Input Section */}
         <vstack gap="medium" alignment="center middle">
-          <text size="large">Guess the image!</text>
+          <text size="large">Guess the Celeb!</text>
           <button
             appearance="secondary"
             onPress={() => {
